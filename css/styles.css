@@ -1,0 +1,22 @@
+:root{
+  --primary: #1A237E;
+  --secondary:#1565C0;
+  --background-start: #1A237E;
+  --background-end: #0D47A1;
+  --card:#ffffff;
+  --muted:#777;
+}
+body.bg-gradient{
+  background: linear-gradient(180deg,var(--background-start),var(--background-end));
+  min-height:100vh;
+}
+.home-hero{
+  background: linear-gradient(180deg,var(--background-start),var(--background-end));
+  border-radius:12px;
+}
+.hero-img{height:140px;width:140px;object-fit:contain}
+.footer-note{
+  background:var(--card);
+  border-radius:8px;
+}
+.card{border-radius:12px}
