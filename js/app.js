@@ -32,12 +32,13 @@ formLogin?.addEventListener('submit', async(e) => {
 
 //Denuncias 
 const form = document.getElementById('formDen');
+const labelErrorReport = document.getElementById('ReportError');
 
 form.addEventListener('submit', async(e) => {
     e.preventDefault();
 
     //En este punto determinar 
-    const user_id = localStorage.getItem('user_id');
+    const user_id = localStorage.getItem('user_id') ?? null;
     const token = localStorage.getItem('token');
 
     if(!user_id || !token){
@@ -56,8 +57,8 @@ form.addEventListener('submit', async(e) => {
         body: JSON.stringify({
           user_id: user_id,       
           title: titulo.value.trim(),
-          category: categoria,
-          descripcion: descripcion.value  .trim(),
+          category: categoria.value.trim(),
+          descripcion: descripcion.value.trim(),
           location: 'Sabra dios donde vive'
         })
       });
@@ -67,74 +68,9 @@ form.addEventListener('submit', async(e) => {
       titulo.value = '';
       categoria.value = '';
       descripcion.value = '';
+      alert('Denuncia registrada exitosamente');
     }catch(err){
-      console.log('Error en la creacion de un reporte: ', err);
+      labelErrorReport.textContent = 'No se pudo crear la denuncia';
+      labelErrorReport.style.display = 'block';
     };
 });
-
-
-// function renderDenuncias(filter){
-//   const container = document.getElementById('listaDenuncias');
-//   container.innerHTML = '';
-//   let lista = loadDenuncias();
-//   if(filter && filter !== 'Todas'){ lista = lista.filter(d => d.EstatusTexto === filter); }
-//   if(lista.length === 0){ container.innerHTML = '<div class="card p-3"><p class="mb-0 text-muted">No hay denuncias que mostrar</p></div>'; return; }
-//   lista.forEach(d => {
-//     const div = document.createElement('div');
-//     div.className = 'card p-3 mb-3';
-//     div.innerHTML = `
-//       <div class="d-flex align-items-start gap-3">
-//         <div style="width:18px;height:18px;border-radius:50%;background:${d.EstatusColor};margin-top:6px"></div>
-//         <div class="flex-grow-1">
-//           <div class="d-flex align-items-center">
-//             <h5 class="mb-0 me-2">${escapeHtml(d.Titulo)}</h5>
-//             <small class="text-muted ms-auto">${escapeHtml(d.EstatusTexto)}</small>
-//           </div>
-//           <div class="text-muted small">${escapeHtml(d.Categoria || '')} • ${new Date(d.Fecha).toLocaleString()}</div>
-//           <p class="mb-0 mt-2 text-body">${escapeHtml(truncate(d.Detalles, 160))}</p>
-//         </div>
-//         <div class="ms-3">
-//           <a class="btn btn-primary" href="detalle_denuncia.html?id=${encodeURIComponent(d.id)}">Ver</a>
-//         </div>
-//       </div>
-//     `;
-//     container.appendChild(div);
-//   });
-// }
-
-// function filterClick(f){ renderDenuncias(f); }
-
-// function renderDetalle(){
-//   const params = new URLSearchParams(location.search);
-//   const id = params.get('id');
-//   const area = document.getElementById('detalleArea');
-//   if(!id || !area){ if(area) area.innerHTML = '<p>Denuncia no encontrada.</p>'; return; }
-//   const lista = loadDenuncias();
-//   const d = lista.find(x => x.id === id);
-//   if(!d){ area.innerHTML = '<p>Denuncia no encontrada.</p>'; return; }
-//   area.innerHTML = `
-//     <div class="card p-3">
-//       <div class="d-flex align-items-center gap-3 mb-2">
-//         <div style="width:18px;height:18px;border-radius:50%;background:${d.EstatusColor}"></div>
-//         <h4 class="mb-0">${escapeHtml(d.Titulo)}</h4>
-//         <div class="ms-auto text-muted">${escapeHtml(d.EstatusTexto)}</div>
-//       </div>
-//       <hr>
-//       <p><strong>Detalles:</strong></p>
-//       <p style="white-space:pre-wrap">${escapeHtml(d.Detalles)}</p>
-//       <p class="text-muted small mb-1">Categoría: ${escapeHtml(d.Categoria || 'No especificada')}</p>
-//       <p class="text-muted small">Fecha: ${new Date(d.Fecha).toLocaleString()}</p>
-//       <div class="mt-3 d-flex gap-2">
-//         <button class="btn btn-primary" onclick="location.href='ver_denuncias.html'">Regresar</button>
-//         <button class="btn btn-success" onclick="marcarAprobada('${d.id}')">Marcar Aprobada</button>
-//         <button class="btn btn-danger" onclick="marcarRechazada('${d.id}')">Marcar Rechazada</button>
-//       </div>
-//     </div>
-//   `;
-// }
-
-// function marcarAprobada(id){ const lista = loadDenuncias(); const d = lista.find(x=>x.id===id); if(!d) return; d.EstatusTexto = 'Aprobada'; d.EstatusColor = '#4caf50'; saveDenuncias(lista); alert('Estatus actualizado.'); renderDetalle(); }
-// function marcarRechazada(id){ const lista = loadDenuncias(); const d = lista.find(x=>x.id===id); if(!d) return; d.EstatusTexto = 'Rechazada'; d.EstatusColor = '#f44336'; saveDenuncias(lista); alert('Estatus actualizado.'); renderDetalle(); }
-
-// function escapeHtml(text){ if(!text) return ''; return text.replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
-// function truncate(text,n){ if(!text) return ''; return text.length>n ? text.slice(0,n-1)+'…' : text; }
