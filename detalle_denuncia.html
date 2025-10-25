@@ -56,16 +56,20 @@
   document.getElementById("btnEditar").addEventListener("click", async () => {
     const nuevoTitulo = prompt("Nuevo título:");
     if (!nuevoTitulo) return;
-
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:3000/api/report/update-report/${id}`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ title: nuevoTitulo })
+        body: JSON.stringify({ 
+          user_id: "p",
+          category: "hsaj",
+          title: nuevoTitulo,
+          description: "jahs",
+          location: "ihsa"
+        })
       });
       if (!response.ok) throw new Error("Error al editar");
       alert("Denuncia actualizada correctamente");
