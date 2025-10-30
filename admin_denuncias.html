@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Panel Administrativo - Denuncias</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .card {
+      border-radius: 12px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.01);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important;
+    }
+
+    .footer-note {
+      border-radius: 12px;
+    }
+
+    .navbar {
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    select.estado-select {
+      font-size: 0.9rem;
+    }
+
+    .badge {
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="img/logo.svg" style="height:36px;object-fit:contain" alt="logo">
+        <span class="ms-2 text-danger fw-bold">Panel Administrativo</span>
+      </a>
+      <div>
+        <a href="logout.html" class="btn btn-outline-danger">Cerrar sesión</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="container py-4" style="max-width:900px">
+    <!-- Filtros -->
+    <div class="card p-3 mb-3 shadow-sm">
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-warning" onclick="filterClick('Pendiente')">Pendientes</button>
+        <button class="btn btn-success" onclick="filterClick('Aprobada')">Aprobadas</button>
+        <button class="btn btn-danger" onclick="filterClick('Rechazada')">Rechazadas</button>
+        <button class="btn btn-outline-secondary" onclick="filterClick('Todas')">Mostrar todas</button>
+      </div>
+    </div>
+
+    <!-- Lista de denuncias -->
+    <div id="listaDenuncias"></div>
+
+    <!-- Pie de página -->
+    <div class="text-center mt-4">
+      <div class="card p-3 footer-note">
+        <div style="width:100px;height:6px;background:#bdbdbd;margin:0 auto 8px;border-radius:3px"></div>
+        <p class="mb-1 text-muted fst-italic">No hay más denuncias que mostrar</p>
+        <p class="mb-0 text-muted">Panel de control de denuncias ciudadanas</p>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Cargar denuncias según filtro
+  async function cargarDenuncias(status = "Todas") {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No cuenta con credenciales válidas');
+        return;
+      }
+
+      const body = {};
+      if (status !== "Todas") {
+        const mapStatus = {
+          Pendiente: "pending",
+          Aprobada: "created",
+          Rechazada: "rejected"
+        };
+        body.status = mapStatus[status];
+      }
+
+      const response = await fetch('http://localhost:3000/api/report/get-reports', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) throw new Error(`Error al obtener denuncias`);
+      const data = await response.json();
+
+      const ordenadas = data.sort((a, b) => a.status === "pending" ? -1 : 1);
+      mostrarDenuncias(ordenadas);
+    } catch (error) {
+      console.error(error);
+      alert("Hubo un error al cargar las denuncias");
+    }
+  }
+
+  // Mostrar denuncias en el panel
+  function mostrarDenuncias(denuncias = []) {
+    const lista = document.getElementById("listaDenuncias");
+    lista.innerHTML = "";
+
+    if (!denuncias || denuncias.length === 0) {
+      lista.innerHTML = `<div class="alert alert-secondary text-center mt-3">
+        No se encontraron denuncias para este filtro.
+      </div>`;
+      return;
+    }
+
+    denuncias.forEach((d) => {
+      const card = document.createElement("div");
+
+      // Color por estado
+      let borderColor = "#adb5bd";
+      let badgeClass = "bg-secondary";
+      if (d.status === "pending") {
+        borderColor = "#ffc107";
+        badgeClass = "bg-warning text-dark";
+      } else if (d.status === "created") {
+        borderColor = "#28a745";
+        badgeClass = "bg-success";
+      } else if (d.status === "rejected") {
+        borderColor = "#dc3545";
+        badgeClass = "bg-danger";
+      }
+
+      card.className = "card mb-4 shadow-sm border-0";
+      card.style.borderLeft = `6px solid ${borderColor}`;
+
+      card.innerHTML = `
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <h5 class="card-title mb-1 text-primary fw-semibold">${d.title || "Sin título"}</h5>
+              <span class="badge ${badgeClass}">${d.status === 'pending' ? 'Pendiente' : d.status === 'created' ? 'Aprobada' : 'Rechazada'}</span>
+            </div>
+            <select class="form-select form-select-sm estado-select w-auto" 
+              onchange="actualizarEstado('${d.id}', this.value)">
+              <option value="pending" ${d.status === 'pending' ? 'selected' : ''}>Pendiente</option>
+              <option value="created" ${d.status === 'created' ? 'selected' : ''}>Aprobada</option>
+              <option value="rejected" ${d.status === 'rejected' ? 'selected' : ''}>Rechazada</option>
+            </select>
+          </div>
+
+          <ul class="list-unstyled small text-muted mb-3">
+            <li><strong>Categoría:</strong> ${d.category || "N/A"}</li>
+            <li><strong>Descripción:</strong> ${d.description || "Sin descripción"}</li>
+            <li><strong>Ubicación:</strong> ${d.location || "No especificada"}</li>
+            <li><strong>ID Usuario:</strong> ${d.user_id || "Desconocido"}</li>
+          </ul>
+
+          <div class="d-flex justify-content-end">
+            <a href="detalle_denuncia.html?id=${d.id}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-eye"></i> Ver detalle
+            </a>
+          </div>
+        </div>
+      `;
+      lista.appendChild(card);
+    });
+  }
+
+  // Cambiar estado de denuncia al seleccionar
+  async function actualizarEstado(id, nuevoEstado) {
+    try {
+      const response = await fetch(`http://localhost:3000/api/report/update-report/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nuevoEstado })
+      });
+
+      if (!response.ok) throw new Error("Error al actualizar el estado");
+      alert(`Estado actualizado a "${nuevoEstado}" correctamente`);
+      cargarDenuncias();
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo actualizar el estado de la denuncia");
+    }
+  }
+
+  // Filtros
+  function filterClick(status) {
+    cargarDenuncias(status);
+  }
+
+  // Cargar denuncias al iniciar
+  document.addEventListener("DOMContentLoaded", () => {
+    cargarDenuncias("Todas");
+  });
+</script>
+</body>
+</html>
